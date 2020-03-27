@@ -51,6 +51,7 @@ func init() {
 	std = New()
 }
 
+// New create new constructorMap, for switch configuration
 func New() ConstructorMap {
 	m := ConstructorMap{}
 	m.Constractors(builtin)
@@ -80,6 +81,7 @@ type S3 struct {
 	conf *aws.Config
 }
 
+// NewS3 create AWS S3 Resource Stream Constructor
 func NewS3() *S3 {
 	return &S3{
 		conf: aws.NewConfig().WithRegion(os.Getenv("AWS_REGION")),
@@ -133,6 +135,7 @@ type GS struct {
 	opts []option.ClientOption
 }
 
+// NewGS create File Resource Stream Constructor
 func NewGS(opts ...option.ClientOption) *GS {
 	return &GS{
 		opts: opts,
@@ -157,8 +160,10 @@ func (c *GS) NewReader(src *url.URL) (io.ReadCloser, error) {
 	return client.Bucket(src.Host).Object(trimPath).NewReader(ctx)
 }
 
+// File provides local FilySystem resource constructor func
 type File struct{}
 
+// NewFile create File Resource Stream Constructor
 func NewFile() *File {
 	return &File{}
 }
@@ -171,13 +176,14 @@ func (c *File) NewReader(src *url.URL) (io.ReadCloser, error) {
 	return os.Open(src.Path)
 }
 
-// HTTP provides HTTP/HTTPS request resource constractor func
+// HTTP provides HTTP/HTTPS request resource constructor func
 type HTTP struct {
 	agentName   string
 	checkStatus bool
 	client      *http.Client
 }
 
+// NewHTTP create HTTP/HTTPS Resource Stream Constructor
 func NewHTTP() *HTTP {
 	return &HTTP{
 		agentName:   "urlio",
@@ -186,6 +192,7 @@ func NewHTTP() *HTTP {
 	}
 }
 
+// A HTTPOption is an option for HTTP resource constructor.
 type HTTPOption interface {
 	Apply(*HTTP)
 }
@@ -250,7 +257,7 @@ func (c *HTTP) NewReader(src *url.URL) (io.ReadCloser, error) {
 
 }
 
-// Constractors adds the elements of the argument map to the function map of the constructor.
+// Constructors adds the elements of the argument map to the function map of the constructor.
 // Must be called before building a io.ReadCloser
 func Constructors(constractorMap ConstructorMap) {
 	std.Constractors(constractorMap)
@@ -276,7 +283,7 @@ func HTTPConfig(opts ...HTTPOption) {
 	stdHTTP.Config(opts...)
 }
 
-//  MustParse as url.Parse. if error occted panic.
+// MustParse as url.Parse. if error occted panic.
 func MustParse(rawurl string) *url.URL {
 	u, err := url.Parse(rawurl)
 	if err != nil {

@@ -5,11 +5,13 @@ import (
 	"net/http/httptest"
 )
 
+// Proxy is http.Client Transport for testing
 type Proxy struct {
 	http.Handler
 	checkHost bool
 }
 
+// NewProxyClient create ProxyClient foruce request to local FileSystem
 func NewProxyClient(base string, checkHost bool) *http.Client {
 	return &http.Client{
 		Transport: &Proxy{
