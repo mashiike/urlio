@@ -14,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/pkg/errors"
 	"google.golang.org/api/option"
 )
 
@@ -169,8 +168,7 @@ func (c *File) NewReader(src *url.URL) (io.ReadCloser, error) {
 	if src.Opaque != "" {
 		return os.Open(src.Opaque)
 	}
-	reader, err := os.Open(src.Path)
-	return reader, errors.Wrapf(err, "file = %#v", src)
+	return os.Open(src.Path)
 }
 
 // HTTP provides HTTP/HTTPS request resource constractor func
