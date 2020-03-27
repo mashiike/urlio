@@ -22,14 +22,14 @@ func TestNewReader(t *testing.T) {
 	testdataAbsPath, _ := filepath.Abs("./testdata")
 	//success
 	cases := [][]string{
-		[]string{"s3://bucket.example.com/object.txt", "hoge\n"},
-		[]string{"gs://bucket/object.txt", "fuga\n"},
-		[]string{"file:./testdata/file/data.txt", "piyo\n"},
-		[]string{"file://" + testdataAbsPath + "/file/data.txt", "piyo\n"},
-		[]string{"./testdata/file/data.txt", "piyo\n"},
-		[]string{testdataAbsPath + "/file/data.txt", "piyo\n"},
-		[]string{"http://web.example.com/data.txt", "tora\n"},
-		[]string{"https://web.example.com/data.txt", "tora\n"},
+		{"s3://bucket.example.com/object.txt", "hoge\n"},
+		{"gs://bucket/object.txt", "fuga\n"},
+		{"file:./testdata/file/data.txt", "piyo\n"},
+		{"file://" + testdataAbsPath + "/file/data.txt", "piyo\n"},
+		{"./testdata/file/data.txt", "piyo\n"},
+		{testdataAbsPath + "/file/data.txt", "piyo\n"},
+		{"http://web.example.com/data.txt", "tora\n"},
+		{"https://web.example.com/data.txt", "tora\n"},
 	}
 	for _, c := range cases {
 		t.Run(c[0], func(t *testing.T) {
