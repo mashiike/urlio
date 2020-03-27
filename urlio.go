@@ -173,7 +173,7 @@ func (c *File) NewReader(src *url.URL) (io.ReadCloser, error) {
 	if src.Opaque != "" {
 		return os.Open(src.Opaque)
 	}
-	return os.Open(src.Path)
+	return os.Open(src.Host + src.Path)
 }
 
 // HTTP provides HTTP/HTTPS request resource constructor func

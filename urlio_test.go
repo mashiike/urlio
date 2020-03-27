@@ -26,6 +26,7 @@ func TestNewReader(t *testing.T) {
 		{"gs://bucket/object.txt", "fuga\n"},
 		{"file:./testdata/file/data.txt", "piyo\n"},
 		{"file://" + testdataAbsPath + "/file/data.txt", "piyo\n"},
+		{"file://./testdata/file/data.txt", "piyo\n"},
 		{"./testdata/file/data.txt", "piyo\n"},
 		{testdataAbsPath + "/file/data.txt", "piyo\n"},
 		{"http://web.example.com/data.txt", "tora\n"},
