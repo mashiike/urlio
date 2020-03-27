@@ -21,6 +21,7 @@ func NewProxyClient(base string, checkHost bool) *http.Client {
 	}
 }
 
+// RoundTrip for impliment http.RoundTripeer
 func (p *Proxy) RoundTrip(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
 	if p.checkHost {
