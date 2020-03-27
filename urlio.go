@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -32,16 +33,21 @@ var (
 	stdS3   *S3
 	stdGS   *GS
 	stdFile *File
+	stdHTTP *HTTP
 )
 
 func init() {
 	stdS3 = NewS3()
 	stdGS = NewGS()
+	stdFile = NewFile()
+	stdHTTP = NewHTTP()
 	builtin = ConstructorMap{
-		"s3":   stdS3,
-		"gs":   stdGS,
-		"file": stdFile,
-		"":     stdFile,
+		"s3":    stdS3,
+		"gs":    stdGS,
+		"file":  stdFile,
+		"":      stdFile,
+		"http":  stdHTTP,
+		"https": stdHTTP,
 	}
 	std = New()
 }
@@ -167,6 +173,85 @@ func (c *File) NewReader(src *url.URL) (io.ReadCloser, error) {
 	return reader, errors.Wrapf(err, "file = %#v", src)
 }
 
+// HTTP provides HTTP/HTTPS request resource constractor func
+type HTTP struct {
+	agentName   string
+	checkStatus bool
+	client      *http.Client
+}
+
+func NewHTTP() *HTTP {
+	return &HTTP{
+		agentName:   "urlio",
+		client:      http.DefaultClient,
+		checkStatus: false,
+	}
+}
+
+type HTTPOption interface {
+	Apply(*HTTP)
+}
+
+// Config sets HTTPOptions
+func (c *HTTP) Config(opts ...HTTPOption) {
+	for _, opt := range opts {
+		opt.Apply(c)
+	}
+}
+
+type withHTTPClient http.Client
+
+func (o *withHTTPClient) Apply(c *HTTP) {
+	c.client = (*http.Client)(o)
+}
+
+// WithHTTPClient is a HTTP/HTTPS scheme option. set *http.Client
+func WithHTTPClient(client *http.Client) HTTPOption {
+	return (*withHTTPClient)(client)
+}
+
+type withUserAgent string
+
+func (o withUserAgent) Apply(c *HTTP) {
+	c.agentName = string(o)
+}
+
+// WithUserAgent is a HTTP/HTTPS scheme option. set user-agent
+func WithUserAgent(agentName string) HTTPOption {
+	return withUserAgent(agentName)
+}
+
+type withCheckStatus bool
+
+func (o withCheckStatus) Apply(c *HTTP) {
+	c.checkStatus = bool(o)
+}
+
+// WithCheckStatus is HTTP/HTTPS scheme option. if set true, status 4xx, 5xx,... not 200 is error
+func WithCheckStatus(check bool) HTTPOption {
+	return withCheckStatus(check)
+}
+
+// NewReader returns a new io.ReadCloser according to http/https resource.
+func (c *HTTP) NewReader(src *url.URL) (io.ReadCloser, error) {
+	req, err := http.NewRequest("GET", src.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("User-Agent", c.agentName)
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if c.checkStatus && resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("request %s, response %s", src.String(), resp.Status)
+	}
+	return resp.Body, nil
+
+}
+
 // Constractors adds the elements of the argument map to the function map of the constructor.
 // Must be called before building a io.ReadCloser
 func Constructors(constractorMap ConstructorMap) {
@@ -186,6 +271,11 @@ func S3Config(cfgs ...*aws.Config) {
 // GSConfig sets GCP client Option
 func GSConfig(opts ...option.ClientOption) {
 	stdGS.Config(opts...)
+}
+
+// HTTPConfig sets HTTPOptions
+func HTTPConfig(opts ...HTTPOption) {
+	stdHTTP.Config(opts...)
 }
 
 //  MustParse as url.Parse. if error occted panic.
