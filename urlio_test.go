@@ -1,6 +1,7 @@
 package urlio_test
 
 import (
+	"io/ioutil"
 	"path/filepath"
 	"testing"
 
@@ -17,17 +18,43 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewReader(t *testing.T) {
-	urls := []string{
-		"s3://bucket.example.com/object.txt",
-		"gs://bucket/object.txt",
+	//success
+	cases := [][]string{
+		[]string{"s3://bucket.example.com/object.txt", "hoge\n"},
+		[]string{"gs://bucket/object.txt", "fuga\n"},
 	}
-	for _, u := range urls {
-		t.Run(u, func(t *testing.T) {
-			reader, err := urlio.NewReader(urlio.MustParse(u))
+	for _, c := range cases {
+		t.Run(c[0], func(t *testing.T) {
+			reader, err := urlio.NewReader(urlio.MustParse(c[0]))
 			if err != nil {
-				t.Fatal(err)
+				t.Errorf("can not create reader: %s", err)
+				return
 			}
 			defer reader.Close()
+			b, err := ioutil.ReadAll(reader)
+			if err != nil {
+				t.Errorf("can not read data: %s", err)
+				return
+			}
+			if string(b) != c[1] {
+				t.Errorf("unexpected data. got = %q, expected = %q", string(b), c[1])
+			}
+		})
+	}
+
+	//failed
+	fcases := []string{
+		"s3://bucket.example.com/not_found.txt",
+		"gs://bucket/not_found.txt",
+		"local:///invalid_scheme.txt",
+	}
+	for _, fc := range fcases {
+		t.Run(fc, func(t *testing.T) {
+			reader, err := urlio.NewReader(urlio.MustParse(fc))
+			if err == nil {
+				reader.Close()
+				t.Errorf("NewReader must failed")
+			}
 		})
 	}
 }
