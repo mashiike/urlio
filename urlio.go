@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/pkg/errors"
 	"google.golang.org/api/option"
 )
 
@@ -28,16 +29,19 @@ var (
 	std     ConstructorMap
 	builtin ConstructorMap
 
-	stdS3 *S3
-	stdGS *GS
+	stdS3   *S3
+	stdGS   *GS
+	stdFile *File
 )
 
 func init() {
 	stdS3 = NewS3()
 	stdGS = NewGS()
 	builtin = ConstructorMap{
-		"s3": stdS3,
-		"gs": stdGS,
+		"s3":   stdS3,
+		"gs":   stdGS,
+		"file": stdFile,
+		"":     stdFile,
 	}
 	std = New()
 }
@@ -146,6 +150,21 @@ func (c *GS) NewReader(src *url.URL) (io.ReadCloser, error) {
 		return nil, err
 	}
 	return client.Bucket(src.Host).Object(trimPath).NewReader(ctx)
+}
+
+type File struct{}
+
+func NewFile() *File {
+	return &File{}
+}
+
+// NewReader returns a new io.ReadCloser according to local FileSystem resource.
+func (c *File) NewReader(src *url.URL) (io.ReadCloser, error) {
+	if src.Opaque != "" {
+		return os.Open(src.Opaque)
+	}
+	reader, err := os.Open(src.Path)
+	return reader, errors.Wrapf(err, "file = %#v", src)
 }
 
 // Constractors adds the elements of the argument map to the function map of the constructor.

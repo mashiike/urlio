@@ -18,10 +18,15 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewReader(t *testing.T) {
+	testdataAbsPath, _ := filepath.Abs("./testdata")
 	//success
 	cases := [][]string{
 		[]string{"s3://bucket.example.com/object.txt", "hoge\n"},
 		[]string{"gs://bucket/object.txt", "fuga\n"},
+		[]string{"file:./testdata/file/data.txt", "piyo\n"},
+		[]string{"file://" + testdataAbsPath + "/file/data.txt", "piyo\n"},
+		[]string{"./testdata/file/data.txt", "piyo\n"},
+		[]string{testdataAbsPath + "/file/data.txt", "piyo\n"},
 	}
 	for _, c := range cases {
 		t.Run(c[0], func(t *testing.T) {
@@ -46,6 +51,8 @@ func TestNewReader(t *testing.T) {
 	fcases := []string{
 		"s3://bucket.example.com/not_found.txt",
 		"gs://bucket/not_found.txt",
+		"file:./testdata/file/not_found.txt",
+		"file://" + testdataAbsPath + "/file/not_found.txt",
 		"local:///invalid_scheme.txt",
 	}
 	for _, fc := range fcases {
