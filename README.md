@@ -6,6 +6,12 @@
 
 
 package urlio aims to provide io.Reader/io.Writer for resources corresponding to URLs.
+builtin support schemes
+ * s3
+ * gs
+ * file
+ * http
+ * https
 
 **Note**: As of v0.0.0, it is still a Reader only implementation.
 
